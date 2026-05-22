@@ -53,8 +53,7 @@ service cloud.firestore {
     }
 
     match /parties/{partyId} {
-      allow read: if isMember(partyId);
-      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow read: if isMember(partyId) || (signedIn() && memberId == request.auth.uid);      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
       allow update: if isOwner(partyId)
         && request.resource.data.ownerUid == resource.data.ownerUid
         && request.resource.data.code == resource.data.code;
