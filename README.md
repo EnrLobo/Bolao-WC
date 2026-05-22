@@ -33,4 +33,16 @@ Os dados na nuvem (Firestore) estão divididos em coleções otimizadas para con
 ### Modo Local (Teste Rápido)
 Por ser 100% estático, você pode executar o aplicativo imediatamente utilizando um servidor HTTP simples em sua máquina. Usando o terminal na pasta do projeto:
 ```bash
+
+
 python -m http.server 3000
+```
+## 6. Modo Produção (Deploy Cloud)
+
+Crie o projeto no Firebase Console, habilitando Authentication (E-mail/Senha) e Firestore Database.
+
+Adicione as regras de segurança (firestore.rules) no painel do banco de dados para evitar acesso indevido.
+
+Preencha suas credenciais do Firebase no arquivo src/firebase-config.js e ative a flag useFirebase = true.
+
+Faça o push do seu código para o GitHub e importe-o na plataforma Vercel como um projeto HTML simples. Nenhuma configuração de "build command" é necessária.
