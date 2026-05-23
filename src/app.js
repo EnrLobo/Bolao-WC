@@ -288,7 +288,9 @@ function render() {
 function renderBoot() {
   return `
     <div class="boot-screen">
-      <div class="brand-mark" aria-hidden="true">26</div>
+      <div class="brand-mark" aria-hidden="true">
+        <img src="./favicon.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;" />
+      </div>
       <p>Carregando BigBall...</p>
     </div>
   `;
@@ -313,7 +315,9 @@ function renderAuth() {
     <main class="auth-layout">
       <section class="auth-panel">
         <div class="brand-row">
-          <div class="brand-mark" aria-hidden="true">26</div>
+          <div class="brand-mark" aria-hidden="true">
+            <img src="./favicon.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;" />
+          </div>
           <div>
             <p class="eyebrow">Dê seu chute certeiro</p>
             <h1>BigBall</h1>
@@ -361,7 +365,9 @@ function renderDashboard() {
   return `
     <header class="topbar">
       <div class="brand-row compact">
-        <div class="brand-mark" aria-hidden="true">26</div>
+        <div class="brand-mark" aria-hidden="true">
+          <img src="./favicon.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;" />
+        </div>
         <div>
           <p class="eyebrow">${state.store.mode === "firebase" ? "Firestore" : "Modo local"}</p>
           <h1>BigBall</h1>
