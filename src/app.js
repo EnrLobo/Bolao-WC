@@ -1,3 +1,4 @@
+import { getFlagUrl } from "./flags.js";
 import { buildRanking, calculatePoints, DEFAULT_SCORING, normalizeScore } from "./scoring.js";
 import { createStore } from "./store.js";
 import { GROUP_FILTERS, STAGE_FILTERS } from "./worldcup2026.js";
@@ -288,8 +289,10 @@ function render() {
 function renderBoot() {
   return `
     <div class="boot-screen">
-      <div class="brand-mark" aria-hidden="true">26</div>
-      <p>Carregando bolao...</p>
+      <div class="brand-mark" aria-hidden="true">
+        <img src="assets/logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;" />
+      </div>
+      <p>Carregando BigBall...</p>
     </div>
   `;
 }
@@ -313,10 +316,12 @@ function renderAuth() {
     <main class="auth-layout">
       <section class="auth-panel">
         <div class="brand-row">
-          <div class="brand-mark" aria-hidden="true">26</div>
+          <div class="brand-mark" aria-hidden="true">
+            <img src="assets/logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;" />
+          </div>
           <div>
-            <p class="eyebrow">Copa do Mundo 2026</p>
-            <h1>Bolao da Copa</h1>
+            <p class="eyebrow">Dê seu chute certeiro</p>
+            <h1>BigBall</h1>
           </div>
         </div>
 
@@ -361,10 +366,12 @@ function renderDashboard() {
   return `
     <header class="topbar">
       <div class="brand-row compact">
-        <div class="brand-mark" aria-hidden="true">26</div>
+        <div class="brand-mark" aria-hidden="true">
+          <img src="assets/logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;" />
+        </div>
         <div>
           <p class="eyebrow">${state.store.mode === "firebase" ? "Firestore" : "Modo local"}</p>
-          <h1>Bolao Copa 2026</h1>
+          <h1>BigBall</h1>
         </div>
       </div>
       <div class="user-box">
@@ -597,15 +604,17 @@ function renderPredictionMatch(match) {
         <small>${renderMatchMeta(match, closed)}</small>
       </div>
       <div class="prediction-grid">
-        <span class="team-name">${escapeHtml(match.homeTeamName)}</span>
-        <input name="homeScore" type="number" min="0" inputmode="numeric" value="${formatInput(
-          prediction?.homeScore,
-        )}" aria-label="Placar do mandante" ${closed ? "disabled" : ""} />
+        <span class="team-name">
+          <img src="${getFlagUrl(match.homeTeamName)}" class="team-flag" alt="" />
+          ${escapeHtml(match.homeTeamName)}
+        </span>
+        <input name="homeScore" type="number" min="0" inputmode="numeric" value="${formatInput(prediction?.homeScore)}" aria-label="Placar do mandante" ${closed ? "disabled" : ""} />
         <span class="versus">x</span>
-        <input name="awayScore" type="number" min="0" inputmode="numeric" value="${formatInput(
-          prediction?.awayScore,
-        )}" aria-label="Placar do visitante" ${closed ? "disabled" : ""} />
-        <span class="team-name align-right">${escapeHtml(match.awayTeamName)}</span>
+        <input name="awayScore" type="number" min="0" inputmode="numeric" value="${formatInput(prediction?.awayScore)}" aria-label="Placar do visitante" ${closed ? "disabled" : ""} />
+        <span class="team-name align-right">
+          ${escapeHtml(match.awayTeamName)}
+          <img src="${getFlagUrl(match.awayTeamName)}" class="team-flag" alt="" />
+        </span>
       </div>
       ${renderWinnerSelect(match, prediction?.winner, closed)}
       <div class="row-actions">
@@ -692,9 +701,15 @@ function renderReadonlyResult(match) {
         <small>${renderMatchMeta(match, match.status === "finished")}</small>
       </div>
       <div class="scoreboard">
-        <span>${escapeHtml(match.homeTeamName)}</span>
+        <span class="team-name">
+          <img src="${getFlagUrl(match.homeTeamName)}" class="team-flag" alt="" />
+          ${escapeHtml(match.homeTeamName)}
+        </span>
         <strong>${formatScore(match)}</strong>
-        <span>${escapeHtml(match.awayTeamName)}</span>
+        <span class="team-name align-right">
+          ${escapeHtml(match.awayTeamName)}
+          <img src="${getFlagUrl(match.awayTeamName)}" class="team-flag" alt="" />
+        </span>
       </div>
     </article>
   `;
