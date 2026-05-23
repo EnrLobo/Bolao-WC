@@ -95,7 +95,7 @@ noscript {
   height: 54px;
   place-items: center;
   flex: 0 0 auto;
-  
+
   background:#ffffff;
 }
 
@@ -777,4 +777,26 @@ tr.is-me {
     border-top: 1px solid var(--line);
     padding: 14px 0 0;
   }
+  
+}
+
+/* --- Estilos para as Bandeiras das Seleções --- */
+.team-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.team-name.align-right {
+  justify-content: flex-end;
+}
+
+.team-flag {
+  width: 20px;
+  height: 20px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background-color: var(--surface);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
