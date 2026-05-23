@@ -1,3 +1,4 @@
+import { getFlagUrl } from "./flags.js";
 import { buildRanking, calculatePoints, DEFAULT_SCORING, normalizeScore } from "./scoring.js";
 import { createStore } from "./store.js";
 import { GROUP_FILTERS, STAGE_FILTERS } from "./worldcup2026.js";
@@ -603,15 +604,17 @@ function renderPredictionMatch(match) {
         <small>${renderMatchMeta(match, closed)}</small>
       </div>
       <div class="prediction-grid">
-        <span class="team-name">${escapeHtml(match.homeTeamName)}</span>
-        <input name="homeScore" type="number" min="0" inputmode="numeric" value="${formatInput(
-          prediction?.homeScore,
-        )}" aria-label="Placar do mandante" ${closed ? "disabled" : ""} />
+        <span class="team-name">
+          <img src="${getFlagUrl(match.homeTeamName)}" class="team-flag" alt="" />
+          ${escapeHtml(match.homeTeamName)}
+        </span>
+        <input name="homeScore" type="number" min="0" inputmode="numeric" value="${formatInput(prediction?.homeScore)}" aria-label="Placar do mandante" ${closed ? "disabled" : ""} />
         <span class="versus">x</span>
-        <input name="awayScore" type="number" min="0" inputmode="numeric" value="${formatInput(
-          prediction?.awayScore,
-        )}" aria-label="Placar do visitante" ${closed ? "disabled" : ""} />
-        <span class="team-name align-right">${escapeHtml(match.awayTeamName)}</span>
+        <input name="awayScore" type="number" min="0" inputmode="numeric" value="${formatInput(prediction?.awayScore)}" aria-label="Placar do visitante" ${closed ? "disabled" : ""} />
+        <span class="team-name align-right">
+          ${escapeHtml(match.awayTeamName)}
+          <img src="${getFlagUrl(match.awayTeamName)}" class="team-flag" alt="" />
+        </span>
       </div>
       ${renderWinnerSelect(match, prediction?.winner, closed)}
       <div class="row-actions">
@@ -698,9 +701,15 @@ function renderReadonlyResult(match) {
         <small>${renderMatchMeta(match, match.status === "finished")}</small>
       </div>
       <div class="scoreboard">
-        <span>${escapeHtml(match.homeTeamName)}</span>
+        <span class="team-name">
+          <img src="${getFlagUrl(match.homeTeamName)}" class="team-flag" alt="" />
+          ${escapeHtml(match.homeTeamName)}
+        </span>
         <strong>${formatScore(match)}</strong>
-        <span>${escapeHtml(match.awayTeamName)}</span>
+        <span class="team-name align-right">
+          ${escapeHtml(match.awayTeamName)}
+          <img src="${getFlagUrl(match.awayTeamName)}" class="team-flag" alt="" />
+        </span>
       </div>
     </article>
   `;
