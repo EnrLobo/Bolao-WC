@@ -289,7 +289,7 @@ function renderBoot() {
   return `
     <div class="boot-screen">
       <div class="brand-mark" aria-hidden="true">26</div>
-      <p>Carregando bolao...</p>
+      <p>Carregando BigBall...</p>
     </div>
   `;
 }
@@ -315,8 +315,8 @@ function renderAuth() {
         <div class="brand-row">
           <div class="brand-mark" aria-hidden="true">26</div>
           <div>
-            <p class="eyebrow">Copa do Mundo 2026</p>
-            <h1>Bolao da Copa</h1>
+            <p class="eyebrow">Dê seu chute certeiro</p>
+            <h1>BigBall</h1>
           </div>
         </div>
 
@@ -364,7 +364,7 @@ function renderDashboard() {
         <div class="brand-mark" aria-hidden="true">26</div>
         <div>
           <p class="eyebrow">${state.store.mode === "firebase" ? "Firestore" : "Modo local"}</p>
-          <h1>Bolao Copa 2026</h1>
+          <h1>BigBall</h1>
         </div>
       </div>
       <div class="user-box">
