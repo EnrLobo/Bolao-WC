@@ -604,14 +604,16 @@ function renderPredictionMatch(match) {
         <small>${renderMatchMeta(match, closed)}</small>
       </div>
       <div class="prediction-grid">
-        <span class="team-name">
+        <span class="team-name" style="cursor: pointer;" onclick="openTeamModal('${match.homeTeamName}')">
           <img src="${getFlagUrl(match.homeTeamName)}" class="team-flag" alt="" />
           ${escapeHtml(match.homeTeamName)}
         </span>
+        
         <input name="homeScore" type="number" min="0" inputmode="numeric" value="${formatInput(prediction?.homeScore)}" aria-label="Placar do mandante" ${closed ? "disabled" : ""} />
         <span class="versus">x</span>
         <input name="awayScore" type="number" min="0" inputmode="numeric" value="${formatInput(prediction?.awayScore)}" aria-label="Placar do visitante" ${closed ? "disabled" : ""} />
-        <span class="team-name align-right">
+        
+        <span class="team-name align-right" style="cursor: pointer;" onclick="openTeamModal('${match.awayTeamName}')">
           ${escapeHtml(match.awayTeamName)}
           <img src="${getFlagUrl(match.awayTeamName)}" class="team-flag" alt="" />
         </span>
@@ -701,12 +703,14 @@ function renderReadonlyResult(match) {
         <small>${renderMatchMeta(match, match.status === "finished")}</small>
       </div>
       <div class="scoreboard">
-        <span class="team-name">
+        <span class="team-name" style="cursor: pointer;" onclick="openTeamModal('${match.homeTeamName}')">
           <img src="${getFlagUrl(match.homeTeamName)}" class="team-flag" alt="" />
           ${escapeHtml(match.homeTeamName)}
         </span>
+        
         <strong>${formatScore(match)}</strong>
-        <span class="team-name align-right">
+        
+        <span class="team-name align-right" style="cursor: pointer;" onclick="openTeamModal('${match.awayTeamName}')">
           ${escapeHtml(match.awayTeamName)}
           <img src="${getFlagUrl(match.awayTeamName)}" class="team-flag" alt="" />
         </span>
@@ -919,3 +923,63 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+
+window.openTeamModal = async function(teamName) {
+  const cleanName = (teamName || "").trim();
+  
+  // 1. Cria o modal no estado "Carregando"
+  const modalContainer = document.createElement("div");
+  modalContainer.id = "active-modal";
+  modalContainer.innerHTML = `
+    <div class="modal-overlay" onclick="closeTeamModal(event)">
+      <div class="team-modal" style="text-align: center; padding: 40px;" onclick="event.stopPropagation()">
+        <img src="${getFlagUrl(cleanName)}" class="team-flag" style="width: 48px; height: 48px; margin-bottom: 16px;" alt="" />
+        <h3 style="margin: 0 0 8px 0;">Consultando dados...</h3>
+        <p class="muted">Buscando informações de ${escapeHtml(cleanName)} no servidor.</p>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modalContainer);
+
+  try {
+    // 2. Faz a requisição para a nossa Vercel Function
+    const response = await fetch(`/api/team?name=${encodeURIComponent(cleanName)}`);
+    
+    if (!response.ok) {
+      throw new Error("Falha ao buscar dados na API.");
+    }
+    
+    const details = await response.json();
+
+    // 3. Atualiza o conteúdo do modal com os dados recebidos
+    document.getElementById("active-modal").innerHTML = `
+      <div class="modal-overlay" onclick="closeTeamModal(event)">
+        <div class="team-modal" onclick="event.stopPropagation()">
+          <header class="team-modal-header">
+            <h2>
+              <img src="${getFlagUrl(cleanName)}" class="team-flag" alt="" />
+              ${escapeHtml(cleanName)}
+            </h2>
+            <button class="button button-ghost" onclick="closeTeamModal()" aria-label="Fechar">X</button>
+          </header>
+          
+          <img src="${details.mapUrl}" class="team-map" alt="Mapa de ${escapeHtml(cleanName)}" />
+          
+          <dl class="definition-list">
+            <div><dt>História</dt><dd>${escapeHtml(details.history)}</dd></div>
+            <div><dt>Títulos</dt><dd>${details.titles} - ${escapeHtml(details.bestCampaign)}</dd></div>
+          </dl>
+
+          <h3 style="margin-top: 24px; border-bottom: 2px solid var(--primary); padding-bottom: 8px;">Convocados (2026)</h3>
+          <ul class="roster-list">
+            ${details.squad.map(player => `<li>${escapeHtml(player)}</li>`).join("")}
+          </ul>
+        </div>
+      </div>
+    `;
+  } catch (error) {
+    setNotice("Não foi possível carregar os dados desta seleção agora.", "error");
+    closeTeamModal();
+    render();
+  }
+};
