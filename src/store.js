@@ -272,6 +272,28 @@ class LocalStore {
     const user = this.currentUser();
     this.listeners.forEach((callback) => callback(user));
   }
+
+  async deleteParty(partyId) {
+    const user = requireUser(this.currentUser());
+    const entry = this.state.parties[partyId];
+    if (entry && entry.party.ownerUid === user.uid) {
+      delete this.state.parties[partyId];
+      this.persist();
+      this.emit();
+    }
+  }
+
+  async leaveParty(partyId) {
+    const user = requireUser(this.currentUser());
+    const entry = this.state.parties[partyId];
+    if (entry) {
+      entry.members = entry.members.filter((m) => m.uid !== user.uid);
+      entry.party.memberCount = entry.members.length;
+      this.persist();
+      this.emit();
+    }
+  }
+  
 }
 
 async function createFirebaseStore() {
@@ -552,6 +574,30 @@ class FirebaseStore {
 
     return code;
   }
+
+  async deleteParty(partyId) {
+    const user = requireUser(mapFirebaseUser(this.auth.currentUser));
+    const { doc, getDoc, deleteDoc } = this.firestore;
+    const partyRef = doc(this.db, "parties", partyId);
+    const partySnap = await getDoc(partyRef);
+    
+    if (partySnap.exists() && partySnap.data().ownerUid === user.uid) {
+      const code = partySnap.data().code;
+      // Remove do banco central
+      await deleteDoc(doc(this.db, "partyCodes", code));
+      await deleteDoc(doc(this.db, "users", user.uid, "parties", partyId));
+      await deleteDoc(partyRef);
+    }
+  }
+
+  async leaveParty(partyId) {
+    const user = requireUser(mapFirebaseUser(this.auth.currentUser));
+    const { doc, deleteDoc } = this.firestore;
+    // Remove as referências do usuário atual
+    await deleteDoc(doc(this.db, "users", user.uid, "parties", partyId));
+    await deleteDoc(doc(this.db, "parties", partyId, "members", user.uid));
+  }
+
 }
 
 function readLocalState() {
