@@ -800,3 +800,37 @@ tr.is-me td {
   .score-summary { border-left: 0; border-top: 1px solid var(--line); padding-left: 0; padding-top: 16px; width: 100%; margin-top: 16px; }
   .party-header { flex-direction: column; align-items: flex-start; }
 }
+
+/* ==========================================================================
+   PROGRESS BAR E RANKING TRENDS
+   ========================================================================== */
+.progress-container {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 20px; margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.progress-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px; font-size: 0.9rem;
+}
+
+.progress-header span { color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.progress-header strong { color: var(--primary); font-weight: 800; font-size: 1rem; }
+
+.progress-track {
+  width: 100%; height: 8px; background: #02060d;
+  border-radius: 999px; overflow: hidden; border: 1px solid var(--line);
+}
+
+.progress-bar {
+  height: 100%; background: var(--primary);
+  box-shadow: var(--shadow-glow); transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rank-pos { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.rank-pos strong { font-size: 1.1rem; color: #fff; }
+.trend { font-size: 0.75rem; font-weight: 900; }
+.trend.up { color: var(--success); }
+.trend.down { color: var(--danger); }
+.trend.neutral { color: var(--muted); }
