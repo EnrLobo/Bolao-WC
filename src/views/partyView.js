@@ -17,9 +17,7 @@ export function renderEmptyParty() {
 export function renderParty(state) {
   const { party, members } = state.partyState;
   const owner = party.ownerUid === state.user.uid;
-  const isBusy = state.busy ? "disabled" : "";
   
-  // Organização limpa das abas principais
   const tabs = [
     ["groups-stage", "Fase de Grupos"],
     ["knockout-stage", "Mata-mata"],
@@ -28,7 +26,6 @@ export function renderParty(state) {
   ];
   if (owner) tabs.push(["admin", "Painel Admin"]);
 
-  // Evitar que usuário fique preso numa aba se deixar de ser admin
   if (!tabs.find(t => t[0] === state.activeTab)) state.activeTab = "groups-stage";
 
   return html`
@@ -41,9 +38,9 @@ export function renderParty(state) {
           <span>${members.length} participante(s)</span>
           <button class="link-button" data-action="copy-code" data-code="${party.code}" type="button">Copiar código</button>
           ${owner 
-            ? html`<button class="link-button" data-action="sync-schedule" type="button" ${isBusy}>Sincronizar tabela</button>
-                   <button class="link-button text-danger" data-action="delete-party" type="button" ${isBusy}>Excluir Party</button>` 
-            : html`<button class="link-button text-danger" data-action="leave-party" type="button" ${isBusy}>Sair da Party</button>`}
+            ? html`<button class="link-button" data-action="sync-schedule" type="button">Sincronizar tabela</button>
+                   <button class="link-button text-danger" data-action="delete-party" type="button">Excluir Party</button>` 
+            : html`<button class="link-button text-danger" data-action="leave-party" type="button">Sair da Party</button>`}
         </div>
         ${renderScheduleSource(party.scheduleSource)}
       </div>
@@ -54,9 +51,7 @@ export function renderParty(state) {
 
     <nav class="tabs" aria-label="Areas da party">
       ${tabs.map(([id, label]) => html`
-        <button class="${state.activeTab === id ? "is-active" : ""}" data-action="tab" data-tab="${id}" type="button">
-          ${label}
-        </button>
+        <button class="${state.activeTab === id ? "is-active" : ""}" data-action="tab" data-tab="${id}" type="button">${label}</button>
       `)}
     </nav>
 
@@ -88,75 +83,69 @@ function renderActiveTab(state) {
   return renderGroupStage(state);
 }
 
-// ==========================================
-// ABA 1: FASE DE GRUPOS (Somente Palpites)
-// ==========================================
+function renderProgress(state, stageType) {
+  const matches = state.partyState.matches.filter(m => m.stageType === stageType);
+  if (matches.length === 0) return "";
+  
+  const total = matches.length;
+  const predicted = state.partyState.predictions.filter(p => p.uid === state.user.uid && matches.some(m => m.id === p.matchId) && Number.isInteger(p.homeScore)).length;
+  const pct = total === 0 ? 0 : Math.round((predicted / total) * 100);
+  
+  return html`
+    <div class="progress-container">
+      <div class="progress-header">
+        <span>Palpites Preenchidos</span>
+        <strong>${predicted} de ${total} jogos (${pct}%)</strong>
+      </div>
+      <div class="progress-track">
+        <div class="progress-bar" style="width: ${pct}%"></div>
+      </div>
+    </div>
+  `;
+}
+
 function renderGroupStage(state) {
   const currentGroup = state.filters.group === "all" ? "A" : state.filters.group;
   const groupsList = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
-  
   const matches = state.partyState.matches.filter(m => m.stageType === "group" && m.group === currentGroup);
 
   return html`
+    ${renderProgress(state, "group")}
     <div class="pill-nav">
-      ${groupsList.map(g => html`
-        <button class="pill ${currentGroup === g ? 'is-active' : ''}" data-action="filter-group" data-group="${g}" type="button">
-          Grupo ${g}
-        </button>
-      `)}
+      ${groupsList.map(g => html`<button class="pill ${currentGroup === g ? 'is-active' : ''}" data-action="filter-group" data-group="${g}" type="button">Grupo ${g}</button>`)}
     </div>
-    
     <div class="match-list">
       ${matches.length === 0 ? html`<p class="muted">Nenhum jogo encontrado.</p>` : matches.map(m => renderPredictionMatch(m, state))}
     </div>
   `;
 }
 
-// ==========================================
-// ABA 2: MATA-MATA (Somente Palpites)
-// ==========================================
 function renderKnockoutStage(state) {
   const currentStage = state.filters.stage === "group" || state.filters.stage === "all" ? "round32" : state.filters.stage;
   const stages = [
-    { id: "round32", label: "16 Avos" },
-    { id: "round16", label: "Oitavas" },
-    { id: "quarter", label: "Quartas" },
-    { id: "semi", label: "Semifinal" },
-    { id: "third", label: "3º Lugar" },
-    { id: "final", label: "Final" }
+    { id: "round32", label: "16 Avos" }, { id: "round16", label: "Oitavas" },
+    { id: "quarter", label: "Quartas" }, { id: "semi", label: "Semifinal" },
+    { id: "third", label: "3º Lugar" }, { id: "final", label: "Final" }
   ];
-
   const matches = state.partyState.matches.filter(m => m.stageType === "knockout" && m.stage === currentStage);
 
   return html`
+    ${renderProgress(state, "knockout")}
     <div class="pill-nav">
-      ${stages.map(s => html`
-        <button class="pill ${currentStage === s.id ? 'is-active' : ''}" data-action="filter-stage" data-stage="${s.id}" type="button">
-          ${s.label}
-        </button>
-      `)}
+      ${stages.map(s => html`<button class="pill ${currentStage === s.id ? 'is-active' : ''}" data-action="filter-stage" data-stage="${s.id}" type="button">${s.label}</button>`)}
     </div>
-
     <div class="match-list">
       ${matches.length === 0 ? html`<p class="muted">Nenhum jogo configurado ainda.</p>` : matches.map(m => renderPredictionMatch(m, state))}
     </div>
   `;
 }
 
-// ==========================================
-// ABA 3: TABELAS DINÂMICAS
-// ==========================================
 function renderGroupTables(state) {
   const standings = calculateStandings(state.partyState.matches);
-  
   return html`
     <div class="section-heading">
-      <div>
-        <h3>Classificação dos Grupos</h3>
-        <p class="muted">Atualizada com base nos resultados oficiais lançados pelo admin.</p>
-      </div>
+      <div><h3>Classificação dos Grupos</h3><p class="muted">Atualizada em tempo real com base nos resultados oficiais.</p></div>
     </div>
-    
     <div class="groups-grid">
       ${Object.entries(standings).map(([groupLetter, teams]) => {
         if (teams.length === 0) return "";
@@ -169,12 +158,7 @@ function renderGroupTables(state) {
                 <tbody>
                   ${teams.map(team => html`
                     <tr>
-                      <td>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                          <img src="${getFlagUrl(team.name)}" class="team-flag" style="width: 16px; height: 16px;" alt="" />
-                          <strong>${team.name}</strong>
-                        </div>
-                      </td>
+                      <td><div style="display: flex; align-items: center; gap: 8px;"><img src="${getFlagUrl(team.name)}" class="team-flag" style="width: 16px; height: 16px;" alt="" /><strong>${team.name}</strong></div></td>
                       <td><strong>${team.pts}</strong></td><td>${team.pld}</td><td>${team.w}</td><td>${team.d}</td><td>${team.l}</td><td>${team.gd}</td>
                     </tr>
                   `)}
@@ -188,22 +172,28 @@ function renderGroupTables(state) {
   `;
 }
 
-// ==========================================
-// ABA 4: RANKING
-// ==========================================
 function renderRanking(state) {
   const { party, members, matches, predictions } = state.partyState;
-  const ranking = buildRanking(members, matches, predictions, party.scoring || DEFAULT_SCORING);
+  const scoring = party.scoring || DEFAULT_SCORING;
+  const ranking = buildRanking(members, matches, predictions, scoring);
+  
   return html`
     <div class="table-wrap">
       <table>
-        <thead><tr><th>#</th><th>Participante</th><th>Total</th><th>Exatos</th><th>Vencedor</th><th>Erros</th></tr></thead>
+        <thead><tr><th>Posição</th><th>Participante</th><th>Total</th><th>Exatos</th><th>Vencedor</th><th>Erros</th></tr></thead>
         <tbody>
-          ${ranking.map((row, index) => html`
+          ${ranking.map((row) => html`
             <tr class="${row.uid === state.user.uid ? "is-me" : ""}">
-              <td>${index + 1}</td>
+              <td>
+                <div class="rank-pos">
+                  <strong>${row.position}º</strong>
+                  ${row.trend > 0 ? html`<span class="trend up">▲ ${row.trend}</span>` : ""}
+                  ${row.trend < 0 ? html`<span class="trend down">▼ ${Math.abs(row.trend)}</span>` : ""}
+                  ${row.trend === 0 ? html`<span class="trend neutral">-</span>` : ""}
+                </div>
+              </td>
               <td><strong>${row.name}</strong><small>${row.email}</small></td>
-              <td>${row.total}</td><td>${row.exact}</td><td>${row.outcome}</td><td>${row.miss}</td>
+              <td><strong>${row.total}</strong></td><td>${row.exact}</td><td>${row.outcome}</td><td>${row.miss}</td>
             </tr>
           `)}
         </tbody>
@@ -212,14 +202,8 @@ function renderRanking(state) {
   `;
 }
 
-// ==========================================
-// ABA 5: PAINEL ADMIN (Regras + Resultados)
-// ==========================================
 function renderAdminPanel(state) {
   const scoring = state.partyState.party.scoring || DEFAULT_SCORING;
-  const isBusy = state.busy ? "disabled" : "";
-  
-  // Para não explodir a tela do admin, usamos um mini-filtro de fase no admin
   const currentStage = state.filters.stage === "all" ? "group" : state.filters.stage;
   const matches = state.partyState.matches.filter(m => m.stageType === currentStage);
 
@@ -231,33 +215,24 @@ function renderAdminPanel(state) {
           <label>Placar exato <input name="exact" type="number" min="0" value="${scoring.exact}" /></label>
           <label>Vencedor correto <input name="outcome" type="number" min="0" value="${scoring.outcome}" /></label>
           <label>Erro <input name="miss" type="number" min="0" value="${scoring.miss}" /></label>
-          <button class="button button-primary" type="submit" ${isBusy}>Salvar regras</button>
+          <button class="button button-primary" type="submit">Salvar regras</button>
         </form>
       </section>
     </div>
-
     <div class="section-divider"></div>
-
     <div class="section-heading">
-      <div>
-        <h3>Lançamento de Resultados Oficiais</h3>
-        <p class="muted">Os resultados inseridos aqui definem os pontos de todos os usuários e atualizam a tabela.</p>
-      </div>
+      <div><h3>Lançamento de Resultados Oficiais</h3><p class="muted">Estes resultados definem os pontos e atualizam todos os participantes em tempo real.</p></div>
     </div>
-    
     <div class="pill-nav">
       <button class="pill ${currentStage === 'group' ? 'is-active' : ''}" data-action="filter-stage" data-stage="group" type="button">Fase de Grupos</button>
       <button class="pill ${currentStage === 'knockout' ? 'is-active' : ''}" data-action="filter-stage" data-stage="knockout" type="button">Mata-mata</button>
     </div>
-
     <div class="match-list">
-      ${matches.slice(0, 48).map(m => renderResultEditor(m, state.busy))} </div>
+      ${matches.slice(0, 48).map(m => renderResultEditor(m))}
+    </div>
   `;
 }
 
-// ==========================================
-// COMPONENTES REUTILIZÁVEIS
-// ==========================================
 function renderPredictionMatch(match, state) {
   const prediction = state.partyState.predictions.find(p => p.matchId === match.id && p.uid === state.user.uid);
   const score = calculatePoints(match, prediction, state.partyState.party.scoring || DEFAULT_SCORING);
@@ -266,53 +241,40 @@ function renderPredictionMatch(match, state) {
   return html`
     <form class="match-row compact-row" data-action="save-prediction">
       <input type="hidden" name="matchId" value="${match.id}" />
-      
       <div class="match-info">
-        <strong>${match.roundName}</strong>
-        <small>${renderMatchMeta(match, closed)}</small>
+        <strong>${match.roundName}</strong><small>${renderMatchMeta(match, closed)}</small>
       </div>
-      
       <div class="prediction-grid">
         <button class="link-button team-name team-clickable" data-action="view-team" data-team="${match.homeTeamName}" type="button">
-          <img src="${getFlagUrl(match.homeTeamName)}" class="team-flag" alt="" />
-          ${match.homeTeamName}
+          <img src="${getFlagUrl(match.homeTeamName)}" class="team-flag" alt="" />${match.homeTeamName}
         </button>
-        
         <input name="homeScore" type="number" min="0" inputmode="numeric" value="${formatInput(prediction?.homeScore)}" ${closed ? "disabled" : ""} />
         <span class="versus">x</span>
         <input name="awayScore" type="number" min="0" inputmode="numeric" value="${formatInput(prediction?.awayScore)}" ${closed ? "disabled" : ""} />
-        
         <button class="link-button team-name team-clickable align-right" data-action="view-team" data-team="${match.awayTeamName}" type="button">
-          ${match.awayTeamName}
-          <img src="${getFlagUrl(match.awayTeamName)}" class="team-flag" alt="" />
+          ${match.awayTeamName}<img src="${getFlagUrl(match.awayTeamName)}" class="team-flag" alt="" />
         </button>
       </div>
-      
       ${renderWinnerSelect(match, prediction?.winner, closed)}
-      
       <div class="row-actions">
         <span class="points-pill ${score.kind}">${score.points} pts</span>
-        <button class="button button-primary" type="submit" ${closed || state.busy ? "disabled" : ""}>Salvar</button>
+        <button class="button button-primary" type="submit" ${closed ? "disabled" : ""}>Salvar</button>
       </div>
     </form>
   `;
 }
 
-function renderResultEditor(match, isBusy) {
+function renderResultEditor(match) {
   return html`
     <form class="match-row editor-row compact-row" data-action="save-match">
       <input type="hidden" name="matchId" value="${match.id}" />
-      <div class="match-info">
-        <strong>${match.roundName}</strong>
-        <small>${match.id}</small>
-      </div>
+      <div class="match-info"><strong>${match.roundName}</strong><small>${match.id}</small></div>
       <div class="editor-grid">
         <label>Mandante <input name="homeTeamName" value="${match.homeTeamName}" required /></label>
         <label>Placar <input name="homeScore" type="number" min="0" value="${formatInput(match.homeScore)}" /></label>
         <label>Visitante <input name="awayTeamName" value="${match.awayTeamName}" required /></label>
         <label>Placar <input name="awayScore" type="number" min="0" value="${formatInput(match.awayScore)}" /></label>
-        <label>
-          Status
+        <label>Status
           <select name="status">
             <option value="scheduled" ${selected(match.status, "scheduled")}>Aberto</option>
             <option value="finished" ${selected(match.status, "finished")}>Fechado</option>
@@ -322,7 +284,7 @@ function renderResultEditor(match, isBusy) {
       ${renderWinnerSelect(match, match.winner, false)}
       <div class="row-actions">
         <span class="points-pill ${match.status === "finished" ? "exact" : "pending"}">${match.status === "finished" ? "Fechado" : "Aguardando"}</span>
-        <button class="button button-primary" type="submit" ${isBusy ? "disabled" : ""}>Salvar resultado</button>
+        <button class="button button-primary" type="submit">Salvar</button>
       </div>
     </form>
   `;
