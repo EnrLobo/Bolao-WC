@@ -210,12 +210,17 @@ async function handleAsyncActions(action, source, submitter) {
 async function refreshParties() {
   if (!state.user) { state.parties = []; return; }
   state.parties = await state.store.listParties();
-  if (!state.parties.some(p => p.partyId === state.currentPartyId)) state.currentPartyId = state.parties[0]?.partyId || null;
+  
+  // Se a party atual não está na lista de parties do usuário, pega a primeira da lista
+  if (!state.parties.some(p => p.partyId === state.currentPartyId)) {
+    state.currentPartyId = state.parties[0]?.partyId || null;
+  }
   
   if (state.currentPartyId) {
     localStorage.setItem(selectedPartyKey, state.currentPartyId);
     await loadCurrentParty();
   } else {
+    // Se ele não tem nenhuma party, limpa tudo com segurança
     localStorage.removeItem(selectedPartyKey);
     if (state.store.unsubscribeFromParty) state.store.unsubscribeFromParty();
     state.partyState = null;
@@ -229,18 +234,41 @@ async function loadCurrentParty() {
     return; 
   }
   
-  state.partyState = await state.store.getParty(state.currentPartyId);
-  
-  if (state.store.subscribeToParty) {
-    state.store.subscribeToParty(state.currentPartyId, (livePartyState) => {
-      state.partyState = livePartyState;
-      const workspace = document.getElementById("workspace");
-      if (workspace && !state.busy) { 
-        workspace.innerHTML = renderParty(state);
-      }
-    });
+  try {
+    // Tenta carregar a party do banco
+    state.partyState = await state.store.getParty(state.currentPartyId);
+    
+    // Se deu certo, inscreve no tempo real
+    if (state.store.subscribeToParty) {
+      state.store.subscribeToParty(state.currentPartyId, (livePartyState) => {
+        state.partyState = livePartyState;
+        const workspace = document.getElementById("workspace");
+        if (workspace && !state.busy) { 
+          workspace.innerHTML = renderParty(state);
+        }
+      });
+    }
+  } catch (error) {
+    // CORREÇÃO CRÍTICA: Se a party não for encontrada (ou foi deletada), tratamos o erro graciosamente
+    console.warn("Party salva no cache não existe mais ou não pode ser acessada:", error.message);
+    
+    // Limpa a party corrompida do cache e tenta recarregar a lista
+    state.currentPartyId = null;
+    localStorage.removeItem(selectedPartyKey);
+    
+    // Pega a próxima party disponível ou deixa vazio
+    state.parties = await state.store.listParties();
+    if (state.parties.length > 0) {
+      state.currentPartyId = state.parties[0].partyId;
+      localStorage.setItem(selectedPartyKey, state.currentPartyId);
+      await loadCurrentParty(); // Tenta carregar a nova
+    } else {
+      if (state.store.unsubscribeFromParty) state.store.unsubscribeFromParty();
+      state.partyState = null;
+    }
   }
 }
+
 
 function renderApp() {
   if (!state.store) return;
