@@ -211,7 +211,6 @@ async function refreshParties() {
   if (!state.user) { state.parties = []; return; }
   state.parties = await state.store.listParties();
   
-  // Se a party atual não está na lista de parties do usuário, pega a primeira da lista
   if (!state.parties.some(p => p.partyId === state.currentPartyId)) {
     state.currentPartyId = state.parties[0]?.partyId || null;
   }
@@ -220,7 +219,6 @@ async function refreshParties() {
     localStorage.setItem(selectedPartyKey, state.currentPartyId);
     await loadCurrentParty();
   } else {
-    // Se ele não tem nenhuma party, limpa tudo com segurança
     localStorage.removeItem(selectedPartyKey);
     if (state.store.unsubscribeFromParty) state.store.unsubscribeFromParty();
     state.partyState = null;
@@ -235,10 +233,8 @@ async function loadCurrentParty() {
   }
   
   try {
-    // Tenta carregar a party do banco
     state.partyState = await state.store.getParty(state.currentPartyId);
     
-    // Se deu certo, inscreve no tempo real
     if (state.store.subscribeToParty) {
       state.store.subscribeToParty(state.currentPartyId, (livePartyState) => {
         state.partyState = livePartyState;
@@ -249,23 +245,19 @@ async function loadCurrentParty() {
       });
     }
   } catch (error) {
-    // CORREÇÃO CRÍTICA: Se a party não for encontrada (ou foi deletada), tratamos o erro graciosamente
-    console.warn("Party salva no cache não existe mais ou não pode ser acessada:", error.message);
+    console.warn("Limpando party fantasma do cache:", error.message);
     
-    // Limpa a party corrompida do cache e tenta recarregar a lista
-    state.currentPartyId = null;
+    // 1. Quebra do Loop Infinito: Limpa o cache imediatamente
     localStorage.removeItem(selectedPartyKey);
+    if (state.store.unsubscribeFromParty) state.store.unsubscribeFromParty();
     
-    // Pega a próxima party disponível ou deixa vazio
-    state.parties = await state.store.listParties();
-    if (state.parties.length > 0) {
-      state.currentPartyId = state.parties[0].partyId;
-      localStorage.setItem(selectedPartyKey, state.currentPartyId);
-      await loadCurrentParty(); // Tenta carregar a nova
-    } else {
-      if (state.store.unsubscribeFromParty) state.store.unsubscribeFromParty();
-      state.partyState = null;
-    }
+    // 2. Remove a party "fantasma" da barra lateral
+    state.parties = state.parties.filter(p => p.partyId !== state.currentPartyId);
+    
+    // 3. Esvazia a tela de forma segura sem chamar a função de novo
+    state.currentPartyId = null;
+    state.partyState = null;
+    renderApp();
   }
 }
 
