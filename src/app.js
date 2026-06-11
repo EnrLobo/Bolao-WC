@@ -55,13 +55,6 @@ function bindGlobalEvents() {
 async function executeAction(action, source, submitter) {
   if (state.busy) return;
   state.busy = true;
-  
-  // Desativa o botão clicado para evitar duplo clique
-  const activeBtn = submitter || (source.tagName === "BUTTON" ? source : null);
-  if (activeBtn) {
-    activeBtn.classList.add('is-loading');
-    activeBtn.disabled = true;
-  }
 
   try {
     if (action === "tab") { state.activeTab = source.dataset.tab; document.getElementById("workspace").innerHTML = renderParty(state); }
@@ -72,17 +65,17 @@ async function executeAction(action, source, submitter) {
     else await handleAsyncActions(action, source, submitter);
   } catch (error) {
     console.error("Erro capturado:", error);
-    alert(`Aviso: ${error.message}`); // Exibe o erro nativamente para fácil leitura
+    alert(`Aviso: ${error.message}`);
   } finally {
     state.busy = false;
     
-    // CORREÇÃO AQUI: Garante que o botão sempre seja reativado no final, não importa o que aconteça!
-    if (activeBtn) {
-      activeBtn.classList.remove('is-loading');
-      activeBtn.disabled = false;
-    }
+    // Força a liberação de TODOS os botões da tela caso algum tenha sido renderizado desativado
+    document.querySelectorAll('button').forEach(b => {
+      b.classList.remove('is-loading');
+      b.disabled = false; 
+    });
     
-    // Atualiza a tela de forma segura apenas no final do processo
+    // Atualiza apenas a área de trabalho
     const workspace = document.getElementById("workspace");
     if (workspace && state.partyState) {
       workspace.innerHTML = renderParty(state);
@@ -113,14 +106,25 @@ async function handleAsyncActions(action, source, submitter) {
     const name = requiredText(formData.get("name"), "Informe o nome.");
     state.currentPartyId = await state.store.createParty({ name });
     localStorage.setItem(selectedPartyKey, state.currentPartyId);
-    await refreshParties(); showToast("Party criada."); renderApp();
+    
+    // Libera o estado ocupado ANTES de redesenhar a tela inteira
+    state.busy = false; 
+    
+    await refreshParties(); 
+    showToast("Party criada."); 
+    renderApp();
   }
 
   if (action === "join-party") {
     const code = requiredText(formData.get("code"), "Informe o código.");
     state.currentPartyId = await state.store.joinParty({ code });
     localStorage.setItem(selectedPartyKey, state.currentPartyId);
-    await refreshParties(); showToast("Você entrou na party."); renderApp();
+    
+    state.busy = false;
+    
+    await refreshParties(); 
+    showToast("Você entrou na party."); 
+    renderApp();
   }
 
   if (action === "select-party") {
@@ -138,6 +142,8 @@ async function handleAsyncActions(action, source, submitter) {
       state.partyState = null;
       localStorage.removeItem(selectedPartyKey);
       
+      state.busy = false;
+      
       await refreshParties(); 
       showToast("Party excluída."); 
       renderApp();
@@ -152,6 +158,8 @@ async function handleAsyncActions(action, source, submitter) {
       state.currentPartyId = null; 
       state.partyState = null;
       localStorage.removeItem(selectedPartyKey);
+      
+      state.busy = false;
       
       await refreshParties(); 
       showToast("Você saiu da party."); 
