@@ -204,8 +204,42 @@ function renderRanking(state) {
 
 function renderAdminPanel(state) {
   const scoring = state.partyState.party.scoring || DEFAULT_SCORING;
-  const currentStage = state.filters.stage === "all" ? "group" : state.filters.stage;
-  const matches = state.partyState.matches.filter(m => m.stageType === currentStage);
+  
+  // CORREÇÃO: Nova lógica de organização avançada para o Admin
+  const isGroupView = state.filters.stage === "group" || state.filters.stage === "all";
+  
+  let filteredMatches = [];
+  let subMenuHtml = "";
+
+  if (isGroupView) {
+    const currentGroup = state.filters.group === "all" ? "A" : state.filters.group;
+    filteredMatches = state.partyState.matches.filter(m => m.stageType === "group" && m.group === currentGroup);
+    
+    const groupsList = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
+    subMenuHtml = html`
+      <div class="pill-nav" style="margin-top: 12px; border-top: 1px solid var(--line); padding-top: 12px;">
+        ${groupsList.map(g => html`
+          <button class="pill ${currentGroup === g ? 'is-active' : ''}" data-action="filter-group" data-group="${g}" type="button">Grupo ${g}</button>
+        `)}
+      </div>
+    `;
+  } else {
+    const currentKnockoutStage = state.filters.stage === "knockout" ? "round32" : state.filters.stage;
+    filteredMatches = state.partyState.matches.filter(m => m.stageType === "knockout" && m.stage === currentKnockoutStage);
+    
+    const stages = [
+      { id: "round32", label: "16 Avos" }, { id: "round16", label: "Oitavas" },
+      { id: "quarter", label: "Quartas" }, { id: "semi", label: "Semifinal" },
+      { id: "third", label: "3º Lugar" }, { id: "final", label: "Final" }
+    ];
+    subMenuHtml = html`
+      <div class="pill-nav" style="margin-top: 12px; border-top: 1px solid var(--line); padding-top: 12px;">
+        ${stages.map(s => html`
+          <button class="pill ${currentKnockoutStage === s.id ? 'is-active' : ''}" data-action="filter-stage" data-stage="${s.id}" type="button">${s.label}</button>
+        `)}
+      </div>
+    `;
+  }
 
   return html`
     <div class="rules-grid" style="margin-bottom: 32px;">
@@ -224,11 +258,16 @@ function renderAdminPanel(state) {
       <div><h3>Lançamento de Resultados Oficiais</h3><p class="muted">Estes resultados definem os pontos e atualizam todos os participantes em tempo real.</p></div>
     </div>
     <div class="pill-nav">
-      <button class="pill ${currentStage === 'group' ? 'is-active' : ''}" data-action="filter-stage" data-stage="group" type="button">Fase de Grupos</button>
-      <button class="pill ${currentStage === 'knockout' ? 'is-active' : ''}" data-action="filter-stage" data-stage="knockout" type="button">Mata-mata</button>
+      <button class="pill ${isGroupView ? 'is-active' : ''}" data-action="filter-stage" data-stage="group" type="button">Fase de Grupos</button>
+      <button class="pill ${!isGroupView ? 'is-active' : ''}" data-action="filter-stage" data-stage="knockout" type="button">Mata-mata</button>
     </div>
-    <div class="match-list">
-      ${matches.slice(0, 48).map(m => renderResultEditor(m))}
+    
+    ${subMenuHtml}
+
+    <div class="match-list" style="margin-top: 20px;">
+      ${filteredMatches.length === 0 
+        ? html`<p class="muted">Nenhum jogo configurado nesta seleção.</p>` 
+        : filteredMatches.map(m => renderResultEditor(m))}
     </div>
   `;
 }
