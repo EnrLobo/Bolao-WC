@@ -5,7 +5,7 @@ import { requiredText } from "./utils/formatters.js";
 import { html } from "./utils/template.js";
 import { renderAuth } from "./views/authView.js";
 import { renderSidebar } from "./views/sidebarView.js";
-import { renderParty, renderEmptyParty } from "./views/partyView.js";
+import { renderParty, renderEmptyParty, openPredictionsModal } from "./views/partyView.js";
 import { openTeamModal } from "./components/teamModal.js";
 
 const selectedPartyKey = "bolao-copa-2026:selected-party";
@@ -62,6 +62,7 @@ async function executeAction(action, source, submitter) {
     else if (action === "filter-stage") { state.filters.stage = source.dataset.stage; document.getElementById("workspace").innerHTML = renderParty(state); }
     else if (action === "copy-code") { await navigator.clipboard.writeText(source.dataset.code); showToast("Código copiado."); }
     else if (action === "view-team") { openTeamModal(source.dataset.team, state.partyState.matches); }
+    else if (action === "view-predictions") { openPredictionsModal(source.dataset.matchId, state); }
     else await handleAsyncActions(action, source, submitter);
   } catch (error) {
     console.error("Erro capturado:", error);
@@ -69,13 +70,11 @@ async function executeAction(action, source, submitter) {
   } finally {
     state.busy = false;
     
-    // Força a liberação de TODOS os botões da tela caso algum tenha sido renderizado desativado
     document.querySelectorAll('button').forEach(b => {
       b.classList.remove('is-loading');
       b.disabled = false; 
     });
     
-    // Atualiza apenas a área de trabalho
     const workspace = document.getElementById("workspace");
     if (workspace && state.partyState) {
       workspace.innerHTML = renderParty(state);
@@ -107,7 +106,6 @@ async function handleAsyncActions(action, source, submitter) {
     state.currentPartyId = await state.store.createParty({ name });
     localStorage.setItem(selectedPartyKey, state.currentPartyId);
     
-    // Libera o estado ocupado ANTES de redesenhar a tela inteira
     state.busy = false; 
     
     await refreshParties(); 
@@ -247,14 +245,11 @@ async function loadCurrentParty() {
   } catch (error) {
     console.warn("Limpando party fantasma do cache:", error.message);
     
-    // 1. Quebra do Loop Infinito: Limpa o cache imediatamente
     localStorage.removeItem(selectedPartyKey);
     if (state.store.unsubscribeFromParty) state.store.unsubscribeFromParty();
     
-    // 2. Remove a party "fantasma" da barra lateral
     state.parties = state.parties.filter(p => p.partyId !== state.currentPartyId);
     
-    // 3. Esvazia a tela de forma segura sem chamar a função de novo
     state.currentPartyId = null;
     state.partyState = null;
     renderApp();
