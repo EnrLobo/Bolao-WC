@@ -10,7 +10,7 @@ export function renderAuth(state) {
           <div class="brand-mark" aria-hidden="true">
             <img src="assets/logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;" />
           </div>
-          <div>
+          <div class="brand-titles">
             <p class="eyebrow">Dê seu chute certeiro</p>
             <h1>BigBall</h1>
           </div>
@@ -18,8 +18,8 @@ export function renderAuth(state) {
 
         <form class="form-grid" data-action="auth">
           <label>
-            Nome
-            <input name="name" autocomplete="name" placeholder="Seu nome" />
+            Nome <span style="font-weight: normal; color: var(--muted);">(Opcional se já tiver conta)</span>
+            <input name="name" autocomplete="name" placeholder="Como quer ser chamado" />
           </label>
           <label>
             E-mail
@@ -33,8 +33,8 @@ export function renderAuth(state) {
           ` : ""}
           <div class="button-row">
             ${firebaseMode ? html`
-              <button class="button button-primary" type="submit" data-intent="signin">Entrar</button>
-              <button class="button" type="submit" data-intent="signup">Criar conta</button>
+              <button class="button button-primary" type="submit" data-intent="signin">Entrar no Bolão</button>
+              <button class="button" type="submit" data-intent="signup">Criar nova conta</button>
             ` : html`
               <button class="button button-primary" type="submit">Entrar no modo local</button>
             `}
@@ -43,8 +43,8 @@ export function renderAuth(state) {
 
         <p class="helper-text">
           ${firebaseMode
-            ? "Firebase conectado. Os dados serao salvos no Firestore."
-            : "Modo local para teste. Preencha o Firebase para salvar em banco real."}
+            ? "Conexão segura estabelecida. Seus dados estão salvos em tempo real na nuvem."
+            : "Modo local para teste. Preencha as chaves do Firebase para salvar em banco real."}
         </p>
       </section>
     </main>
