@@ -204,8 +204,6 @@ function renderRanking(state) {
 
 function renderAdminPanel(state) {
   const scoring = state.partyState.party.scoring || DEFAULT_SCORING;
-  
-  // CORREÇÃO: Nova lógica de organização avançada para o Admin
   const isGroupView = state.filters.stage === "group" || state.filters.stage === "all";
   
   let filteredMatches = [];
@@ -294,7 +292,7 @@ function renderPredictionMatch(match, state) {
           ${match.awayTeamName}<img src="${getFlagUrl(match.awayTeamName)}" class="team-flag" alt="" />
         </button>
       </div>
-      ${renderWinnerSelect(match, prediction?.winner, closed)}
+      
       <div class="row-actions">
         <span class="points-pill ${score.kind}">${score.points} pts</span>
         <button class="button button-primary" type="submit" ${closed ? "disabled" : ""}>Salvar</button>
@@ -320,26 +318,11 @@ function renderResultEditor(match) {
           </select>
         </label>
       </div>
-      ${renderWinnerSelect(match, match.winner, false)}
       <div class="row-actions">
         <span class="points-pill ${match.status === "finished" ? "exact" : "pending"}">${match.status === "finished" ? "Fechado" : "Aguardando"}</span>
         <button class="button button-primary" type="submit">Salvar</button>
       </div>
     </form>
-  `;
-}
-
-function renderWinnerSelect(match, currentValue = "", disabledSelect = false) {
-  if (match.stageType !== "knockout") return "";
-  return html`
-    <label class="winner-select">
-      Classificado
-      <select name="winner" ${disabledSelect ? "disabled" : ""}>
-        <option value="" ${selected(currentValue, "")}>Pelo placar</option>
-        <option value="home" ${selected(currentValue, "home")}>${match.homeTeamName}</option>
-        <option value="away" ${selected(currentValue, "away")}>${match.awayTeamName}</option>
-      </select>
-    </label>
   `;
 }
 

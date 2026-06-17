@@ -232,8 +232,10 @@ input[type="number"] { -moz-appearance: textfield; }
    ========================================================================== */
 .match-list { display: grid; gap: 12px; }
 
+/* Adicionado o GAP de 24px para afastar os elementos e não colar */
 .match-row.compact-row {
   display: grid; grid-template-columns: 200px minmax(320px, 1fr) auto; align-items: center;
+  gap: 24px; 
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 14px 20px; box-shadow: var(--shadow-sm);
 }
@@ -258,15 +260,15 @@ input[type="number"] { -moz-appearance: textfield; }
 .prediction-grid input:focus { border-color: var(--primary); box-shadow: var(--shadow-glow); }
 .versus { font-weight: 800; color: var(--muted); font-size: 0.9rem; width: 14px; text-align: center; }
 
-/* Espaçamento e Alinhamento das Ações e Pílulas */
 .row-actions { 
   display: flex; justify-content: flex-end; align-items: center; gap: 16px; 
 }
 
+/* O Balãozinho perfeito! Altura min de 40px para ficar igual ao botão Salvar */
 .points-pill {
   display: inline-flex; align-items: center; justify-content: center;
-  padding: 0 14px; height: 32px; border-radius: 999px; 
-  font-size: 0.75rem; font-weight: 800; border: 1px solid transparent; white-space: nowrap;
+  padding: 0 16px; min-height: 40px; border-radius: 999px; 
+  font-size: 0.85rem; font-weight: 800; border: 1px solid transparent; white-space: nowrap;
 }
 .points-pill.pending { background: var(--surface-strong); color: var(--muted); }
 .points-pill.exact { background: rgba(0, 230, 118, 0.1); color: var(--primary); border-color: rgba(0, 230, 118, 0.3); }
@@ -276,8 +278,17 @@ input[type="number"] { -moz-appearance: textfield; }
 /* ==========================================================================
    9. PAINEL ADMINISTRATIVO & TABELAS
    ========================================================================== */
-.editor-row { grid-template-columns: 160px 1fr auto !important; }
-.editor-grid { display: grid; grid-template-columns: repeat(2, 1fr 64px) 120px; gap: 12px; align-items: end; width: 100%; }
+/* Alinhamento pelo fundo (flex-end) para colar o botão na mesma linha dos inputs */
+.editor-row { 
+  grid-template-columns: 160px 1fr auto !important; 
+  align-items: flex-end !important; 
+}
+.editor-row .match-info { padding-bottom: 6px; }
+
+/* Grid com espaço para a caixa "Classificado" quando houver */
+.editor-grid { display: grid; grid-template-columns: repeat(2, 1fr 64px) 110px; gap: 12px; width: 100%; }
+.editor-grid.has-winner { grid-template-columns: repeat(2, 1fr 64px) 110px 140px; }
+
 .editor-grid label { font-size: 0.75rem; }
 .editor-grid input, .editor-grid select { min-height: 38px; }
 
@@ -368,10 +379,11 @@ tr.is-me td { border-bottom-color: rgba(0, 230, 118, 0.2); }
   .team-name.align-right { flex-direction: column; }
   
   .row-actions { width: 100%; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 16px; margin-top: 8px; }
-  .winner-select { margin-top: 12px; width: 100%; }
-
-  .editor-grid { grid-template-columns: 1fr 80px; gap: 12px; }
+  
+  /* Mantém o grid estruturado no celular pro Admin */
+  .editor-grid, .editor-grid.has-winner { grid-template-columns: 1fr 80px; gap: 12px; }
   .editor-grid label:nth-child(5) { grid-column: 1 / -1; } 
+  .editor-grid .winner-select { grid-column: 1 / -1; margin-top: 4px; }
   
   .rules-grid { grid-template-columns: 1fr; }
   .scoring-form { grid-template-columns: 1fr; }
