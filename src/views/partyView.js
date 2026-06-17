@@ -294,6 +294,8 @@ function renderPredictionMatch(match, state) {
       </div>
       
       <div class="row-actions">
+        <button class="link-button" data-action="view-predictions" data-match-id="${match.id}" type="button" style="margin-right: auto; font-size: 0.8rem; color: var(--muted); text-decoration: underline;">Ver palpites</button>
+        
         <span class="points-pill ${score.kind}">${score.points} pts</span>
         <button class="button button-primary" type="submit" ${closed ? "disabled" : ""}>Salvar</button>
       </div>
@@ -333,4 +335,52 @@ function renderMatchMeta(match, closed) {
   if (match.ground) parts.push(match.ground);
   if (match.stageType === "knockout" && match.crossingHome && match.crossingAway) parts.push(`${match.crossingHome} x ${match.crossingAway}`);
   return parts.join(" - ");
+}
+
+// ==========================================================================
+// FUNÇÃO QUE ABRE O MODAL DOS PALPITES DA GALERA
+// ==========================================================================
+export function openPredictionsModal(matchId, state) {
+  const match = state.partyState.matches.find(m => m.id === matchId);
+  const members = state.partyState.members;
+  const predictions = state.partyState.predictions.filter(p => p.matchId === matchId);
+
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
+  modal.id = "predictions-modal";
+
+  modal.innerHTML = html`
+    <div class="modal-content">
+      <button class="modal-close" data-action="close-modal">×</button>
+      <h2 style="margin-bottom: 4px; font-size: 1.4rem;">Palpites da Galera</h2>
+      <p class="muted" style="margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--line);">
+        ${match.homeTeamName} x ${match.awayTeamName}
+      </p>
+      
+      <ul style="list-style: none; padding: 0; margin: 0; max-height: 400px; overflow-y: auto;">
+        ${members.map(member => {
+          const p = predictions.find(pred => pred.uid === member.uid);
+          const hasGuess = p && Number.isInteger(p.homeScore);
+          const guessStr = hasGuess ? `${p.homeScore} x ${p.awayScore}` : "Sem palpite";
+          const colorStyle = hasGuess ? "color: var(--primary);" : "color: var(--muted);";
+
+          return html`
+            <li style="display:flex; justify-content:space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line);">
+              <span style="font-size: 0.95rem;"><strong>${member.name}</strong></span>
+              <span style="${colorStyle} font-size: 1.1rem; font-weight: 800;">${guessStr}</span>
+            </li>
+          `;
+        })}
+      </ul>
+    </div>
+  `.toString(); // toString necessário porque o 'html' retorna um objeto SafeString
+
+  document.body.appendChild(modal);
+
+  // Fecha o modal ao clicar fora ou no botão (x)
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal || e.target.closest('[data-action="close-modal"]')) {
+      modal.remove();
+    }
+  });
 }
